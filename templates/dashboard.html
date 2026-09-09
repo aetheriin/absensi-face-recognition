@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <div class="brand">
+                Sistem Absensi
+                <span>PT Yuni Bersaudara Sejahtera</span>
+            </div>
+            <div>
+                <a href="/daftar-absen">Daftar & Absen</a>
+                <a href="/karyawan">Daftar Karyawan</a>
+                <a href="/laporan">Laporan Absensi</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Dashboard</h1>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="angka">{{ summary.total_karyawan }}</div>
+                <div class="label">Total Karyawan</div>
+            </div>
+            <div class="summary-card">
+                <div class="angka">{{ summary.hadir }}</div>
+                <div class="label">Hadir Hari Ini</div>
+            </div>
+            <div class="summary-card telat">
+                <div class="angka">{{ summary.telat }}</div>
+                <div class="label">Telat Hari Ini</div>
+            </div>
+            <div class="summary-card izin">
+                <div class="angka">{{ summary.izin_dll }}</div>
+                <div class="label">Izin / Sakit / Cuti</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Tren Kehadiran 7 Hari Terakhir</h2>
+            <canvas id="chartTren" height="90"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('chartTren');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ labels | safe }},
+                datasets: [{
+                    label: 'Jumlah Hadir',
+                    data: {{ values | safe }},
+                    borderColor: '#233D2C',
+                    backgroundColor: 'rgba(35, 61, 44, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: '#C97A2B',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

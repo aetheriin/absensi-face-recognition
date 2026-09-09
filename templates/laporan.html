@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Laporan Absensi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <div class="brand">
+                Sistem Absensi
+                <span>PT Yuni Bersaudara Sejahtera</span>
+            </div>
+            <div>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/daftar-absen">Daftar & Absen</a>
+                <a href="/karyawan">Daftar Karyawan</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Laporan Absensi</h1>
+
+        <form method="get" action="/laporan" class="form-inline">
+            <label style="margin-bottom:0;">Tanggal</label>
+            <input type="date" name="tanggal" value="{{ tanggal }}">
+            <button type="submit">Lihat</button>
+        </form>
+
+        <form method="post" action="/laporan/edit-status-batch">
+            <input type="hidden" name="tanggal" value="{{ tanggal }}">
+
+            <div class="panel">
+                <table>
+                    <tr>
+                        <th>Nama</th>
+                        <th>Jam Masuk</th>
+                        <th>Status</th>
+                        <th>Telat (menit)</th>
+                        <th>Jam Keluar</th>
+                        <th>Ubah Status</th>
+                        <th>Keterangan</th>
+                    </tr>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ row.Nama }}</td>
+                        <td>{{ row.JamMasuk if row.JamMasuk else '-' }}</td>
+                        <td class="
+                            {%- if row.status_masuk == 'Telat' %} status-telat
+                            {%- elif row.status_masuk == 'Tepat Waktu' %} status-tepat
+                            {%- elif row.status_masuk in ['Izin', 'Sakit', 'Cuti'] %} status-cuti
+                            {%- else %} status-kosong
+                            {%- endif %}">
+                            {{ row.status_masuk }}
+                        </td>
+                        <td>{{ row.telat_menit if row.telat_menit > 0 else '-' }}</td>
+                        <td>{{ row.JamKeluar if row.JamKeluar else '-' }}</td>
+                        <td>
+                            <select name="status_{{ row.KaryawanId }}">
+                                <option value="">-- Pilih --</option>
+                                <option value="Izin">Izin</option>
+                                <option value="Sakit">Sakit</option>
+                                <option value="Cuti">Cuti</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="keterangan_{{ row.KaryawanId }}" placeholder="Opsional" value="{{ row.Keterangan if row.Keterangan else '' }}">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <button type="submit">Simpan Semua Perubahan</button>
+        </form>
+
+        <a href="/" class="link-kembali">Kembali</a>
+    </div>
+</body>
+</html>

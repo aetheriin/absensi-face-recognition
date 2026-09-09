@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Absensi Face Recognition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <div class="brand">
+                Sistem Absensi
+                <span>PT Yuni Bersaudara Sejahtera</span>
+            </div>
+            <div>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/karyawan">Daftar Karyawan</a>
+                <a href="/laporan">Laporan Absensi</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Daftar Karyawan Baru</h2>
+            <form id="form-register" enctype="multipart/form-data">
+                <label>Nama</label>
+                <input type="text" name="nama" required>
+                <label>NIK</label>
+                <input type="text" name="nik">
+                <label>Foto</label>
+                <input type="file" name="foto" accept="image/*" required>
+                <button type="submit">Daftar</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Absen</h2>
+            <form id="form-absen" enctype="multipart/form-data">
+                <label>Foto</label>
+                <input type="file" name="foto" accept="image/*" required>
+                <button type="submit">Absen</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function kirimForm(formElement, url) {
+            const formData = new FormData(formElement);
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+                alert(data.message || data.error || "Terjadi kesalahan");
+            } catch (err) {
+                alert("Gagal menghubungi server: " + err);
+            }
+            formElement.reset();
+        }
+
+        document.getElementById("form-register").addEventListener("submit", function (e) {
+            e.preventDefault();
+            kirimForm(this, "/register");
+        });
+
+        document.getElementById("form-absen").addEventListener("submit", function (e) {
+            e.preventDefault();
+            kirimForm(this, "/absen");
+        });
+    </script>
+</body>
+</html>

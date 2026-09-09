@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Karyawan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <div class="brand">
+                Sistem Absensi
+                <span>PT Yuni Bersaudara Sejahtera</span>
+            </div>
+            <div>
+                <a href="/">Daftar & Absen</a>
+                <a href="/laporan">Laporan Absensi</a>
+                <a href="/karyawan">Daftar Karyawan</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Edit Karyawan: {{ karyawan.Nama }}</h2>
+            <form action="/karyawan/edit/{{ karyawan.Id }}" method="post" enctype="multipart/form-data">
+                <label>Nama</label>
+                <input type="text" name="nama" value="{{ karyawan.Nama }}" required>
+                <label>NIK</label>
+                <input type="text" name="nik" value="{{ karyawan.NIK if karyawan.NIK else '' }}">
+                <label>Ganti Foto (opsional)</label>
+                <input type="file" name="foto" accept="image/*">
+                <button type="submit">Simpan Perubahan</button>
+            </form>
+        </div>
+
+        <a href="/karyawan" class="link-kembali">Kembali</a>
+    </div>
+</body>
+</html>

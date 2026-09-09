@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daftar Karyawan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="app-nav">
+        <div class="nav-inner">
+            <div class="brand">
+                Sistem Absensi
+                <span>PT Yuni Bersaudara Sejahtera</span>
+            </div>
+            <div>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/daftar-absen">Daftar & Absen</a>
+                <a href="/laporan">Laporan Absensi</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Daftar Karyawan Terdaftar</h1>
+
+        <div class="panel">
+            <table>
+                <tr>
+                    <th>No</th>
+                    <th>NIK</th>
+                    <th>Nama</th>
+                    <th>Terdaftar Sejak</th>
+                    <th>Foto</th>
+                    <th>Aksi</th>
+                </tr>
+                {% for row in data %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.NIK if row.NIK else '-' }}</td>
+                    <td>{{ row.Nama }}</td>
+                    <td>{{ row.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>
+                        {% if row.FotoPath %}
+                        <a href="{{ url_for('static', filename=row.FotoPath) }}" target="_blank">Lihat Foto</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="aksi-group">
+                        <a href="/karyawan/edit/{{ row.Id }}">Edit</a>
+                        <form action="/karyawan/hapus/{{ row.Id }}" method="post" onsubmit="return confirm('Yakin hapus karyawan ini?');">
+                            <button type="submit">Hapus</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <a href="/" class="link-kembali">Kembali</a>
+    </div>
+</body>
+</html>
