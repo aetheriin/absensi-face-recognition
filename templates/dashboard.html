@@ -1,81 +1,75 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-</head>
-<body>
-    <nav class="app-nav">
-        <div class="nav-inner">
-            <div class="brand">
-                Sistem Absensi
-                <span>PT Yuni Bersaudara Sejahtera</span>
-            </div>
-            <div>
-                <a href="/daftar-absen">Daftar & Absen</a>
-                <a href="/karyawan">Daftar Karyawan</a>
-                <a href="/laporan">Laporan Absensi</a>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Ringkasan Kehadiran{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
-    <div class="container">
-        <h1>Dashboard</h1>
-
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="angka">{{ summary.total_karyawan }}</div>
-                <div class="label">Total Karyawan</div>
-            </div>
-            <div class="summary-card">
-                <div class="angka">{{ summary.hadir }}</div>
-                <div class="label">Hadir Hari Ini</div>
-            </div>
-            <div class="summary-card telat">
-                <div class="angka">{{ summary.telat }}</div>
-                <div class="label">Telat Hari Ini</div>
-            </div>
-            <div class="summary-card izin">
-                <div class="angka">{{ summary.izin_dll }}</div>
-                <div class="label">Izin / Sakit / Cuti</div>
-            </div>
+{% block content %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Karyawan</p>
+            <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ summary.total_karyawan }}</h3>
         </div>
-
-        <div class="panel">
-            <h2>Tren Kehadiran 7 Hari Terakhir</h2>
-            <canvas id="chartTren" height="90"></canvas>
-        </div>
+        <div class="bg-indigo-50 text-indigo-600 p-4 rounded-2xl"><i class="fa-solid fa-users text-xl"></i></div>
     </div>
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Hadir Hari Ini</p>
+            <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ summary.hadir }}</h3>
+        </div>
+        <div class="bg-emerald-50 text-emerald-600 p-4 rounded-2xl"><i class="fa-solid fa-face-smile text-xl"></i></div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Telat Hari Ini</p>
+            <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ summary.telat }}</h3>
+        </div>
+        <div class="bg-red-50 text-red-600 p-4 rounded-2xl"><i class="fa-solid fa-clock text-xl"></i></div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Izin / Sakit / Cuti</p>
+            <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ summary.izin_dll }}</h3>
+        </div>
+        <div class="bg-amber-50 text-amber-600 p-4 rounded-2xl"><i class="fa-solid fa-umbrella-beach text-xl"></i></div>
+    </div>
+</div>
 
-    <script>
-        const ctx = document.getElementById('chartTren');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {{ labels | safe }},
-                datasets: [{
-                    label: 'Jumlah Hadir',
-                    data: {{ values | safe }},
-                    borderColor: '#233D2C',
-                    backgroundColor: 'rgba(35, 61, 44, 0.1)',
-                    tension: 0.3,
-                    fill: true,
-                    pointBackgroundColor: '#C97A2B',
-                    pointRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+    <h3 class="font-bold text-slate-800 text-base mb-1">Tren Kehadiran 7 Hari Terakhir</h3>
+    <p class="text-xs text-slate-500 mb-4">Jumlah karyawan yang tercatat hadir per hari</p>
+    <div class="relative h-72 w-full">
+        <canvas id="attendanceChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ labels | safe }},
+            datasets: [{
+                label: 'Jumlah Hadir',
+                data: {{ values | safe }},
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: '#6366f1',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } }
+        }
+    });
+</script>
+{% endblock %}

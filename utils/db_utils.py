@@ -192,7 +192,7 @@ def cek_nik_sudah_ada(nik, exclude_id=None):
     conn.close()
     return row is not None
 
-def cari_wajah_mirip(embedding_baru, threshold=0.6, exclude_id=None):
+def cari_wajah_mirip(embedding_baru, threshold=0.55, exclude_id=None):
     # Pengecekan karyawan yang sudah terdaftar
     from utils.face_utils import binary_to_embedding, compare_faces
 
@@ -206,3 +206,36 @@ def cari_wajah_mirip(embedding_baru, threshold=0.6, exclude_id=None):
         if is_match:
             return (karyawan_id, nama)
     return None
+
+def get_user_by_username(username):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT Id, Username, PasswordHash, NamaLengkap, Role FROM Users WHERE Username = ?", username)
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+def get_user_by_id(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT Id, Username, NamaLengkap, Role FROM Users WHERE Id = ?", user_id)
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+def update_last_login(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE Users SET LastLogin = GETDATE() WHERE Id = ?", user_id)
+    conn.commit()
+    conn.close()
+
+def insert_user(username, password_hash, nama_lengkap, role="hrd"):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO Users (Username, PasswordHash, NamaLengkap, Role) VALUES (?, ?, ?, ?)",
+        username, password_hash, nama_lengkap, role
+    )
+    conn.commit()
+    conn.close()

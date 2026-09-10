@@ -1,84 +1,77 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Laporan Absensi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <nav class="app-nav">
-        <div class="nav-inner">
-            <div class="brand">
-                Sistem Absensi
-                <span>PT Yuni Bersaudara Sejahtera</span>
-            </div>
-            <div>
-                <a href="/dashboard">Dashboard</a>
-                <a href="/daftar-absen">Daftar & Absen</a>
-                <a href="/karyawan">Daftar Karyawan</a>
-            </div>
+{% extends "base.html" %}
+{% block title %}Laporan Absensi{% endblock %}
+{% block page_title %}Laporan Absensi{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+    <form method="get" action="/laporan" class="flex items-center space-x-3">
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal</label>
+            <input type="date" name="tanggal" value="{{ tanggal }}" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
-    </nav>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition mt-5">
+            Lihat
+        </button>
+    </form>
+</div>
 
-    <div class="container">
-        <h1>Laporan Absensi</h1>
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <form method="post" action="/laporan/edit-status-batch">
+        <input type="hidden" name="tanggal" value="{{ tanggal }}">
 
-        <form method="get" action="/laporan" class="form-inline">
-            <label style="margin-bottom:0;">Tanggal</label>
-            <input type="date" name="tanggal" value="{{ tanggal }}">
-            <button type="submit">Lihat</button>
-        </form>
-
-        <form method="post" action="/laporan/edit-status-batch">
-            <input type="hidden" name="tanggal" value="{{ tanggal }}">
-
-            <div class="panel">
-                <table>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Jam Masuk</th>
-                        <th>Status</th>
-                        <th>Telat (menit)</th>
-                        <th>Jam Keluar</th>
-                        <th>Ubah Status</th>
-                        <th>Keterangan</th>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <th class="py-3 px-6">Nama</th>
+                        <th class="py-3 px-6">Jam Masuk</th>
+                        <th class="py-3 px-6">Status</th>
+                        <th class="py-3 px-6">Telat (menit)</th>
+                        <th class="py-3 px-6">Jam Keluar</th>
+                        <th class="py-3 px-6">Ubah Status</th>
+                        <th class="py-3 px-6">Keterangan</th>
                     </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                     {% for row in data %}
-                    <tr>
-                        <td>{{ row.Nama }}</td>
-                        <td>{{ row.JamMasuk if row.JamMasuk else '-' }}</td>
-                        <td class="
-                            {%- if row.status_masuk == 'Telat' %} status-telat
-                            {%- elif row.status_masuk == 'Tepat Waktu' %} status-tepat
-                            {%- elif row.status_masuk in ['Izin', 'Sakit', 'Cuti'] %} status-cuti
-                            {%- else %} status-kosong
-                            {%- endif %}">
-                            {{ row.status_masuk }}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-4 px-6 font-semibold text-slate-800">{{ row.Nama }}</td>
+                        <td class="py-4 px-6">{{ row.JamMasuk if row.JamMasuk else '-' }}</td>
+                        <td class="py-4 px-6">
+                            {% if row.status_masuk == 'Telat' %}
+                            <span class="bg-red-50 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full">Telat</span>
+                            {% elif row.status_masuk == 'Tepat Waktu' %}
+                            <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">Tepat Waktu</span>
+                            {% elif row.status_masuk in ['Izin', 'Sakit', 'Cuti'] %}
+                            <span class="bg-amber-50 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ row.status_masuk }}</span>
+                            {% else %}
+                            <span class="bg-slate-100 text-slate-500 text-xs font-semibold px-2.5 py-1 rounded-full">Belum Ada Data</span>
+                            {% endif %}
                         </td>
-                        <td>{{ row.telat_menit if row.telat_menit > 0 else '-' }}</td>
-                        <td>{{ row.JamKeluar if row.JamKeluar else '-' }}</td>
-                        <td>
-                            <select name="status_{{ row.KaryawanId }}">
+                        <td class="py-4 px-6">{{ row.telat_menit if row.telat_menit > 0 else '-' }}</td>
+                        <td class="py-4 px-6">{{ row.JamKeluar if row.JamKeluar else '-' }}</td>
+                        <td class="py-4 px-6">
+                            <select name="status_{{ row.KaryawanId }}" class="bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none">
                                 <option value="">-- Pilih --</option>
                                 <option value="Izin">Izin</option>
                                 <option value="Sakit">Sakit</option>
                                 <option value="Cuti">Cuti</option>
                             </select>
                         </td>
-                        <td>
-                            <input type="text" name="keterangan_{{ row.KaryawanId }}" placeholder="Opsional" value="{{ row.Keterangan if row.Keterangan else '' }}">
+                        <td class="py-4 px-6">
+                            <input type="text" name="keterangan_{{ row.KaryawanId }}" placeholder="Opsional" value="{{ row.Keterangan if row.Keterangan else '' }}" class="bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none w-32">
                         </td>
                     </tr>
                     {% endfor %}
-                </table>
-            </div>
+                </tbody>
+            </table>
+        </div>
 
-            <button type="submit">Simpan Semua Perubahan</button>
-        </form>
-
-        <a href="/" class="link-kembali">Kembali</a>
-    </div>
-</body>
-</html>
+        <div class="p-6 border-t border-slate-100">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-md transition">
+                Simpan Semua Perubahan
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

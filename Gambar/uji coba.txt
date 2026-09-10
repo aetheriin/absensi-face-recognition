@@ -1,0 +1,43 @@
+Hasil Uji Coba :
+
+1. Gambar 1 vs Gambar 2 : 
+
+Cocok: True, Jarak: 0.4718
+
+2. Test 1 vs Test 2 :
+
+Cocok: True, Jarak: 0.4655
+
+3. Test 5 vs Test 6 :
+
+Cocok: True, Jarak: 0.5370
+
+4. Test 7 vs Test 8 :
+
+Wajah tidak terdeteksi di salah satu foto!
+
+5. Test 10 vs Test 11 :
+
+Cocok: True, Jarak: 0.3718
+
+6. Test 13 vs Test 15 :
+
+Wajah tidak terdeteksi di salah satu foto!
+
+7. Test 16 vs Test 17 :
+
+Cocok: True, Jarak: 0.3826
+
+8. Test 16 vs Test 17 :
+
+Cocok: True, Jarak: 0.5507
+
+9. Test 20 vs Test 21 :
+
+Cocok: True, Jarak: 0.2905
+
+10. Test 20 vs Test 22 :
+
+Cocok: True, Jarak: 0.4114
+
+11. 

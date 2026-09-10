@@ -1,65 +1,263 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Daftar Karyawan</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <nav class="app-nav">
-        <div class="nav-inner">
-            <div class="brand">
-                Sistem Absensi
-                <span>PT Yuni Bersaudara Sejahtera</span>
-            </div>
-            <div>
-                <a href="/dashboard">Dashboard</a>
-                <a href="/daftar-absen">Daftar & Absen</a>
-                <a href="/laporan">Laporan Absensi</a>
-            </div>
+{% extends "base.html" %}
+{% block title %}Daftar Karyawan{% endblock %}
+{% block page_title %}Daftar Karyawan{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h3 class="font-bold text-slate-800 text-lg">Karyawan Terdaftar</h3>
+            <p class="text-xs text-slate-500">Kelola data karyawan dan template wajah untuk absensi</p>
         </div>
-    </nav>
+        <button onclick="openModal('modalDaftar')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-xs transition shadow-sm flex items-center space-x-2">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Daftar Karyawan Baru</span>
+        </button>
+    </div>
 
-    <div class="container">
-        <h1>Daftar Karyawan Terdaftar</h1>
-
-        <div class="panel">
-            <table>
-                <tr>
-                    <th>No</th>
-                    <th>NIK</th>
-                    <th>Nama</th>
-                    <th>Terdaftar Sejak</th>
-                    <th>Foto</th>
-                    <th>Aksi</th>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                    <th class="py-3 px-6">No</th>
+                    <th class="py-3 px-6">NIK</th>
+                    <th class="py-3 px-6">Nama</th>
+                    <th class="py-3 px-6">Terdaftar Sejak</th>
+                    <th class="py-3 px-6">Foto</th>
+                    <th class="py-3 px-6 text-right">Aksi</th>
                 </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                 {% for row in data %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ row.NIK if row.NIK else '-' }}</td>
-                    <td>{{ row.Nama }}</td>
-                    <td>{{ row.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                    <td>
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-4 px-6 text-slate-500">{{ loop.index }}</td>
+                    <td class="py-4 px-6 font-mono text-xs">{{ row.NIK if row.NIK else '-' }}</td>
+                    <td class="py-4 px-6 font-semibold text-slate-800">{{ row.Nama }}</td>
+                    <td class="py-4 px-6 text-slate-500 text-xs">{{ row.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td class="py-4 px-6">
                         {% if row.FotoPath %}
-                        <a href="{{ url_for('static', filename=row.FotoPath) }}" target="_blank">Lihat Foto</a>
+                        <a href="{{ url_for('static', filename=row.FotoPath) }}" target="_blank" class="text-indigo-600 hover:underline text-xs font-medium">
+                            <i class="fa-regular fa-image mr-1"></i>Lihat
+                        </a>
                         {% else %}
-                        -
+                        <span class="text-slate-300 text-xs">-</span>
                         {% endif %}
                     </td>
-                    <td class="aksi-group">
-                        <a href="/karyawan/edit/{{ row.Id }}">Edit</a>
-                        <form action="/karyawan/hapus/{{ row.Id }}" method="post" onsubmit="return confirm('Yakin hapus karyawan ini?');">
-                            <button type="submit">Hapus</button>
+                    <td class="py-4 px-6 text-right space-x-3">
+                        <button onclick="openEditModal('{{ row.Id }}', '{{ row.Nama }}', '{{ row.NIK if row.NIK else '' }}')" class="text-slate-400 hover:text-indigo-600 transition" title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <form action="/karyawan/hapus/{{ row.Id }}" method="post" class="inline" onsubmit="return confirm('Yakin hapus karyawan ini?');">
+                            <button type="submit" class="text-slate-400 hover:text-red-500 transition" title="Hapus"><i class="fa-solid fa-trash"></i></button>
                         </form>
                     </td>
                 </tr>
                 {% endfor %}
-            </table>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Daftar Karyawan Baru -->
+<div id="modalDaftar" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <h3 class="font-bold text-slate-800 text-base flex items-center">
+                <i class="fa-solid fa-user-plus text-indigo-600 mr-2"></i> Daftar Karyawan Baru
+            </h3>
+            <button onclick="closeModal('modalDaftar')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
 
-        <a href="/" class="link-kembali">Kembali</a>
+        <form id="form-register" enctype="multipart/form-data" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama</label>
+                <input type="text" name="nama" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">NIK</label>
+                <input type="number" name="nik" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Foto</label>
+                <div class="flex gap-2 mb-2">
+                    <button type="button" onclick="pilihModeFoto('upload')" id="btnModeUpload" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white">Upload File</button>
+                    <button type="button" onclick="pilihModeFoto('kamera')" id="btnModeKamera" class="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600">Live Scan</button>
+                </div>
+
+                <div id="areaUpload">
+                    <input type="file" name="foto" id="inputFotoFile" accept="image/*" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div id="areaKamera" class="hidden">
+                    <div class="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3]">
+                        <video id="videoDaftar" autoplay playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+                        <canvas id="canvasDaftar" style="display:none;"></canvas>
+                    </div>
+                    <button type="button" onclick="ambilFotoDaftar()" class="w-full mt-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold py-2 rounded-xl">
+                        <i class="fa-solid fa-camera mr-1"></i>Ambil Foto
+                    </button>
+                    <p id="previewStatus" class="text-xs text-emerald-600 mt-1 hidden">✓ Foto berhasil diambil</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeModal('modalDaftar')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs">Batal</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl text-xs shadow-md">Daftar</button>
+            </div>
+        </form>
     </div>
-</body>
-</html>
+</div>
+
+<!-- Modal Edit Karyawan -->
+<div id="modalEdit" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <h3 class="font-bold text-slate-800 text-base flex items-center">
+                <i class="fa-solid fa-user-pen text-indigo-600 mr-2"></i> Edit Data Karyawan
+            </h3>
+            <button onclick="closeModal('modalEdit')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <form id="form-edit" method="post" enctype="multipart/form-data" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama</label>
+                <input type="text" id="edit-nama" name="nama" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">NIK</label>
+                <input type="number" id="edit-nik" name="nik" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Ganti Foto <span class="text-slate-400 font-normal">(opsional)</span></label>
+                <input type="file" name="foto" accept="image/*" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeModal('modalEdit')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs">Batal</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl text-xs shadow-md">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.getElementById(id).classList.add('flex');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('flex');
+        document.getElementById(id).classList.add('hidden');
+        if (id === 'modalDaftar' && streamDaftar) {
+            streamDaftar.getTracks().forEach(t => t.stop());
+            streamDaftar = null;
+        }
+    }
+
+    function openEditModal(id, nama, nik) {
+        document.getElementById('edit-nama').value = nama;
+        document.getElementById('edit-nik').value = nik;
+        const editForm = document.getElementById('form-edit');
+        editForm.action = `/karyawan/edit/${id}`;
+        openModal('modalEdit');
+    }
+
+    // ==== Toggle mode foto: Upload vs Live Scan ====
+    let fotoBlobDaftar = null;
+    let streamDaftar = null;
+
+    function pilihModeFoto(mode) {
+        const btnUpload = document.getElementById('btnModeUpload');
+        const btnKamera = document.getElementById('btnModeKamera');
+        const areaUpload = document.getElementById('areaUpload');
+        const areaKamera = document.getElementById('areaKamera');
+        const inputFile = document.getElementById('inputFotoFile');
+
+        if (mode === 'upload') {
+            btnUpload.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white";
+            btnKamera.className = "text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600";
+            areaUpload.classList.remove('hidden');
+            areaKamera.classList.add('hidden');
+            inputFile.required = true;
+            if (streamDaftar) {
+                streamDaftar.getTracks().forEach(t => t.stop());
+                streamDaftar = null;
+            }
+        } else {
+            btnKamera.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white";
+            btnUpload.className = "text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600";
+            areaUpload.classList.add('hidden');
+            areaKamera.classList.remove('hidden');
+            inputFile.required = false;
+
+            navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+                streamDaftar = stream;
+                document.getElementById('videoDaftar').srcObject = stream;
+            }).catch(err => {
+                alert("Gagal akses kamera: " + err.message);
+            });
+        }
+    }
+
+    function ambilFotoDaftar() {
+        const video = document.getElementById('videoDaftar');
+        const canvas = document.getElementById('canvasDaftar');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        canvas.toBlob(blob => {
+            fotoBlobDaftar = blob;
+            document.getElementById('previewStatus').classList.remove('hidden');
+        }, 'image/jpeg');
+    }
+
+    // ==== Submit Handler - Register ====
+    document.getElementById("form-register").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        const modeKamera = !document.getElementById('areaKamera').classList.contains('hidden');
+        if (modeKamera) {
+            if (!fotoBlobDaftar) {
+                alert("Ambil foto dulu sebelum daftar");
+                return;
+            }
+            formData.delete('foto');
+            formData.append('foto', fotoBlobDaftar, 'capture.jpg');
+        }
+
+        try {
+            const response = await fetch("/register", { method: "POST", body: formData });
+            const data = await response.json();
+            alert(data.message || data.error || "Terjadi kesalahan");
+            if (data.message) {
+                closeModal('modalDaftar');
+                location.reload();
+            }
+        } catch (err) {
+            alert("Gagal menghubungi server: " + err);
+        }
+    });
+
+    // ==== Submit Handler - Edit ====
+    document.getElementById("form-edit").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const url = this.action;
+        try {
+            const response = await fetch(url, { method: "POST", body: formData });
+            const data = await response.json();
+            alert(data.message || data.error || "Terjadi kesalahan");
+            if (data.message) {
+                closeModal('modalEdit');
+                location.reload();
+            }
+        } catch (err) {
+            alert("Gagal menghubungi server: " + err);
+        }
+    });
+</script>
+{% endblock %}

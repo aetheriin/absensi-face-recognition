@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PresensiHR{% endblock %} - PT Yuni Bersaudara Sejahtera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
+    </script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside id="sidebar" class="bg-slate-900 text-slate-300 w-64 space-y-6 py-6 px-4 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out z-30 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center space-x-3 px-2 mb-8">
+                    <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center">
+                        <i class="fa-solid fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-white font-bold text-lg tracking-wide block">Sistem Absensi</span>
+                        <span class="text-xs text-indigo-400">PT Yuni Bersaudara Sejahtera</span>
+                    </div>
+                </div>
+
+                <nav class="space-y-1">
+                    <a href="/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition {{ 'bg-indigo-600 text-white font-medium shadow-md' if active_page == 'dashboard' else 'hover:bg-slate-800 text-slate-300 hover:text-white' }}">
+                        <i class="fa-solid fa-chart-pie w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/daftar-absen" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition {{ 'bg-indigo-600 text-white font-medium shadow-md' if active_page == 'daftar-absen' else 'hover:bg-slate-800 text-slate-300 hover:text-white' }}">
+                        <i class="fa-solid fa-camera w-5"></i>
+                        <span>Absen</span>
+                    </a>
+                    <a href="/karyawan" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition {{ 'bg-indigo-600 text-white font-medium shadow-md' if active_page == 'karyawan' else 'hover:bg-slate-800 text-slate-300 hover:text-white' }}">
+                        <i class="fa-solid fa-users w-5"></i>
+                        <span>Daftar Karyawan</span>
+                    </a>
+                    <a href="/laporan" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition {{ 'bg-indigo-600 text-white font-medium shadow-md' if active_page == 'laporan' else 'hover:bg-slate-800 text-slate-300 hover:text-white' }}">
+                        <i class="fa-solid fa-file-lines w-5"></i>
+                        <span>Laporan Absensi</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 flex items-center justify-between px-2">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
+                        {{ current_user.nama_lengkap[0]|upper }}
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-white">{{ current_user.nama_lengkap }}</h4>
+                        <p class="text-xs text-indigo-400">{{ current_user.role|upper }}</p>
+                    </div>
+                </div>
+                <a href="/logout" class="text-slate-400 hover:text-red-400 transition" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                </a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 z-20 shadow-sm">
+                <div class="flex items-center space-x-4">
+                    <button id="menu-btn" class="text-slate-500 hover:text-slate-700 md:hidden focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="text-xl font-bold text-slate-800">{% block page_title %}{% endblock %}</h1>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-6">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('menu-btn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -116,6 +116,8 @@ label {
 input[type="text"],
 input[type="file"],
 input[type="date"],
+input[type="number"], 
+input[type="password"],
 select {
   width: 100%;
   padding: 0.55rem;
@@ -273,3 +275,22 @@ a {
 .summary-card.telat .angka { color: var(--merah-error); }
 .summary-card.izin { border-top-color: var(--oranye-sawit); }
 .summary-card.izin .angka { color: var(--oranye-sawit); }
+
+/* password  */
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  padding-right: 2.5rem;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-70%);
+  cursor: pointer;
+  color: var(--coklat-tanah);
+  user-select: none;
+}

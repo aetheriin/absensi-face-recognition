@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Absen via Kamera{% endblock %}
+{% block page_title %}Absen via Kamera{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="relative bg-slate-900 aspect-[4/3] flex items-center justify-center">
+            <video id="video" autoplay playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+
+            <!-- Kotak hasil, muncul di atas video -->
+            <div id="hasilBox" class="absolute inset-0 hidden flex-col items-center justify-center text-center p-6"></div>
+        </div>
+        <div class="p-4 text-center">
+            <p id="statusText" class="text-xs text-slate-500">Memuat kamera...</p>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/daftar-absen" class="text-xs text-indigo-600 hover:underline">Kembali ke absen manual (upload foto)</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const hasilBox = document.getElementById('hasilBox');
+    const statusText = document.getElementById('statusText');
+
+    let sedangProses = false;
+    const JEDA_ANTAR_CAPTURE = 4000;
+    const DURASI_TAMPIL_HASIL = 3000;
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+            statusText.textContent = "Kamera aktif — arahkan wajah ke kamera";
+            setInterval(() => { if (!sedangProses) ambilDanKirim(); }, JEDA_ANTAR_CAPTURE);
+        })
+        .catch(err => {
+            statusText.textContent = "Gagal akses kamera: " + err.message;
+        });
+
+    function ambilDanKirim() {
+        sedangProses = true;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('foto', blob, 'capture.jpg');
+
+            try {
+                const response = await fetch('/absen', { method: 'POST', body: formData });
+                const data = await response.json();
+                tampilkanHasil(data);
+            } catch (err) {
+                sedangProses = false;
+            }
+        }, 'image/jpeg');
+    }
+
+    function tampilkanHasil(data) {
+        const berhasil = !!data.nama;
+
+        if (berhasil) {
+            hasilBox.className = "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-emerald-900/90";
+            hasilBox.innerHTML = `
+                <i class="fa-solid fa-circle-check text-emerald-300 text-4xl mb-3"></i>
+                <h3 class="text-white font-bold text-xl">${data.nama}</h3>
+                <p class="text-emerald-200 text-xs font-mono mt-1">NIK: ${data.nik}</p>
+                <p class="text-white text-sm mt-2">Berhasil absen ${data.status}</p>
+                <p class="text-emerald-300 text-sm font-medium mt-1">Terima kasih!</p>
+            `;
+        } else {
+            hasilBox.className = "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-red-900/90";
+            hasilBox.innerHTML = `
+                <i class="fa-solid fa-circle-exclamation text-red-300 text-4xl mb-3"></i>
+                <p class="text-white text-sm">${data.error || 'Terjadi kesalahan'}</p>
+            `;
+        }
+
+        hasilBox.classList.remove('hidden');
+        hasilBox.classList.add('flex');
+
+        setTimeout(() => {
+            hasilBox.classList.remove('flex');
+            hasilBox.classList.add('hidden');
+            sedangProses = false;
+        }, DURASI_TAMPIL_HASIL);
+    }
+</script>
+{% endblock %}

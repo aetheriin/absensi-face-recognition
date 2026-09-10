@@ -17,7 +17,7 @@ def binary_to_embedding(binary_data):
     # Convert bytes dari database balik jadi numpy array embedding
     return np.frombuffer(binary_data, dtype=np.float64)
 
-def compare_faces(known_embedding, unknown_embedding, threshold=0.6):
+def compare_faces(known_embedding, unknown_embedding, threshold=0.55):
     # Bandingkan dua embedding
     distance = np.linalg.norm(known_embedding - unknown_embedding)
     return distance <= threshold, distance
