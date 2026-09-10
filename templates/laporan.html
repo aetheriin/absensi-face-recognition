@@ -35,7 +35,7 @@
                 <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                     {% for row in data %}
                     <tr class="hover:bg-slate-50 transition">
-                        <td class="py-4 px-6 font-semibold text-slate-800">{{ row.Nama }}</td>
+                        <td class="py-4 px-6 font-mono text-slate-800">{{ row.Nama }}</td>
                         <td class="py-4 px-6">{{ row.JamMasuk if row.JamMasuk else '-' }}</td>
                         <td class="py-4 px-6">
                             {% if row.status_masuk == 'Telat' %}

@@ -32,7 +32,7 @@
                 <tr class="hover:bg-slate-50 transition">
                     <td class="py-4 px-6 text-slate-500">{{ loop.index }}</td>
                     <td class="py-4 px-6 font-mono text-xs">{{ row.NIK if row.NIK else '-' }}</td>
-                    <td class="py-4 px-6 font-semibold text-slate-800">{{ row.Nama }}</td>
+                    <td class="py-4 px-6 font-mono text-slate-800">{{ row.Nama }}</td>
                     <td class="py-4 px-6 text-slate-500 text-xs">{{ row.CreatedAt.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                     <td class="py-4 px-6">
                         {% if row.FotoPath %}
