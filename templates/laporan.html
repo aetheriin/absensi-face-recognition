@@ -4,12 +4,27 @@
 
 {% block content %}
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-    <form method="get" action="/laporan" class="flex items-center space-x-3">
+    <form method="get" action="/laporan" class="flex flex-wrap items-end gap-3">
         <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal</label>
-            <input type="date" name="tanggal" value="{{ tanggal }}" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Dari Tanggal</label>
+            <input type="date" name="tanggal_awal" value="{{ tanggal_awal }}" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
-        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition mt-5">
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Sampai Tanggal</label>
+            <input type="date" name="tanggal_akhir" value="{{ tanggal_akhir }}" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Karyawan</label>
+            <input type="text" id="inputCariKaryawan" list="daftarKaryawanList" placeholder="Ketik nama karyawan..." autocomplete="off"
+                class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56">
+            <datalist id="daftarKaryawanList">
+                {% for k in daftar_karyawan %}
+                <option value="{{ k.Nama }}"></option>
+                {% endfor %}
+            </datalist>
+            <input type="hidden" name="karyawan_id" id="hiddenKaryawanId" value="{{ karyawan_id }}">
+        </div>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-xl text-sm transition">
             Lihat
         </button>
     </form>
@@ -17,12 +32,11 @@
 
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
     <form method="post" action="/laporan/edit-status-batch">
-        <input type="hidden" name="tanggal" value="{{ tanggal }}">
-
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <th class="py-3 px-6">Tanggal</th>
                         <th class="py-3 px-6">Nama</th>
                         <th class="py-3 px-6">Jam Masuk</th>
                         <th class="py-3 px-6">Status</th>
@@ -35,7 +49,8 @@
                 <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                     {% for row in data %}
                     <tr class="hover:bg-slate-50 transition">
-                        <td class="py-4 px-6 font-mono text-slate-800">{{ row.Nama }}</td>
+                        <td class="py-4 px-6 text-slate-500 text-xs">{{ row.Tanggal }}</td>
+                        <td class="py-4 px-6 font-semibold text-slate-800">{{ row.Nama }}</td>
                         <td class="py-4 px-6">{{ row.JamMasuk if row.JamMasuk else '-' }}</td>
                         <td class="py-4 px-6">
                             {% if row.status_masuk == 'Telat' %}
@@ -51,7 +66,7 @@
                         <td class="py-4 px-6">{{ row.telat_menit if row.telat_menit > 0 else '-' }}</td>
                         <td class="py-4 px-6">{{ row.JamKeluar if row.JamKeluar else '-' }}</td>
                         <td class="py-4 px-6">
-                            <select name="status_{{ row.KaryawanId }}" class="bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none">
+                            <select name="status_{{ row.KaryawanId }}_{{ row.Tanggal }}" class="bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none">
                                 <option value="">-- Pilih --</option>
                                 <option value="Izin">Izin</option>
                                 <option value="Sakit">Sakit</option>
@@ -59,7 +74,7 @@
                             </select>
                         </td>
                         <td class="py-4 px-6">
-                            <input type="text" name="keterangan_{{ row.KaryawanId }}" placeholder="Opsional" value="{{ row.Keterangan if row.Keterangan else '' }}" class="bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none w-32">
+                            <input type="text" name="keterangan_{{ row.KaryawanId }}_{{ row.Tanggal }}" placeholder="Opsional" value="{{ row.Keterangan if row.Keterangan else '' }}" class="bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none w-32">
                         </td>
                     </tr>
                     {% endfor %}
@@ -74,4 +89,34 @@
         </div>
     </form>
 </div>
+
+<script>
+    const petaKaryawan = {
+        {% for k in daftar_karyawan %}
+        "{{ k.Nama }}": "{{ k.Id }}",
+        {% endfor %}
+    };
+
+    const inputCari = document.getElementById('inputCariKaryawan');
+    const hiddenId = document.getElementById('hiddenKaryawanId');
+
+    // Isi nama yang sedang aktif difilter (kalau ada) saat halaman dimuat
+    {% if karyawan_id %}
+    for (const [nama, id] of Object.entries(petaKaryawan)) {
+        if (id === "{{ karyawan_id }}") {
+            inputCari.value = nama;
+        }
+    }
+    {% endif %}
+
+    inputCari.addEventListener('input', function () {
+        const nama = this.value;
+        if (petaKaryawan[nama]) {
+            hiddenId.value = petaKaryawan[nama];
+        } else {
+            hiddenId.value = "";
+        }
+    });
+</script>
+
 {% endblock %}

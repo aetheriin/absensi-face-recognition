@@ -162,7 +162,30 @@ def get_laporan_by_tanggal(tanggal):
     columns = [column[0] for column in cursor.description]
     data = [dict(zip(columns, row)) for row in cursor.fetchall()]
     conn.close()
+
+    for row in data:
+        row["Tanggal"] = tanggal   # BARU — tambahkan kolom Tanggal manual ke tiap baris
+
     return data
+
+def get_laporan_by_rentang(tanggal_awal, tanggal_akhir, karyawan_id=None):
+    hasil = []
+    tanggal_sekarang = tanggal_awal
+    while tanggal_sekarang <= tanggal_akhir:
+        rows = get_laporan_by_tanggal(tanggal_sekarang)
+        if karyawan_id:
+            rows = [r for r in rows if str(r["KaryawanId"]) == str(karyawan_id)]
+        hasil.extend(rows)
+        tanggal_sekarang += timedelta(days=1)
+    return hasil
+
+def get_daftar_nama_karyawan():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT Id, Nama FROM Karyawan ORDER BY Nama")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
 
 def set_status_manual(karyawan_id, tanggal, status, keterangan):
     conn = get_connection()

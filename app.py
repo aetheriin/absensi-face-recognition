@@ -29,7 +29,9 @@ from utils.db_utils import (
     get_tren_7_hari,
     get_user_by_username, 
     update_last_login, 
-    insert_user
+    insert_user,
+    get_laporan_by_rentang,
+    get_daftar_nama_karyawan
 )
 
 JAM_MASUK_STANDAR = time(8, 0)
@@ -70,7 +72,6 @@ def logout():
 UPLOAD_FOLDER = "static/uploads"
 
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  
-
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
 
 def ekstensi_diizinkan(filename):
@@ -124,27 +125,43 @@ def dashboard():
 @app.route("/laporan")
 @login_required
 def laporan():
-    tanggal_str = request.args.get("tanggal")
-    if tanggal_str:
-        tanggal = datetime.strptime(tanggal_str, "%Y-%m-%d").date()
-    else:
-        tanggal = date_cls.today()
+    tanggal_awal_str = request.args.get("tanggal_awal")
+    tanggal_akhir_str = request.args.get("tanggal_akhir")
+    karyawan_id = request.args.get("karyawan_id", "")
 
-    rows = get_laporan_by_tanggal(tanggal)
+    if tanggal_awal_str and tanggal_akhir_str:
+        tanggal_awal = datetime.strptime(tanggal_awal_str, "%Y-%m-%d").date()
+        tanggal_akhir = datetime.strptime(tanggal_akhir_str, "%Y-%m-%d").date()
+    else:
+        tanggal_awal = date_cls.today()
+        tanggal_akhir = date_cls.today()
+
+    rows = get_laporan_by_rentang(tanggal_awal, tanggal_akhir, karyawan_id if karyawan_id else None)
+
     data = []
     for row in rows:
         if row["Status"] in ("Izin", "Sakit", "Cuti"):
             row["status_masuk"] = row["Status"]
             row["telat_menit"] = 0
         elif row["JamMasuk"]:
-            status = hitung_status_absensi(tanggal, row["JamMasuk"])
+            status = hitung_status_absensi(row["Tanggal"], row["JamMasuk"])
             row.update(status)
         else:
             row["status_masuk"] = "Belum Ada Data"
             row["telat_menit"] = 0
         data.append(row)
 
-    return render_template("laporan.html", data=data, tanggal=tanggal, active_page="laporan")
+    daftar_karyawan = get_daftar_nama_karyawan()
+
+    return render_template(
+        "laporan.html",
+        data=data,
+        tanggal_awal=tanggal_awal,
+        tanggal_akhir=tanggal_akhir,
+        karyawan_id=karyawan_id,
+        daftar_karyawan=daftar_karyawan,
+        active_page="laporan"
+    )
 
 @app.route("/laporan/edit-status", methods=["POST"])
 @login_required
@@ -308,18 +325,17 @@ def absen_kamera():
 
 @app.route("/laporan/edit-status-batch", methods=["POST"])
 def edit_status_batch():
-    tanggal = request.form.get("tanggal")
-
     for key in request.form:
         if key.startswith("status_"):
-            karyawan_id = key.replace("status_", "")
-            status = request.form.get(f"status_{karyawan_id}")
-            keterangan = request.form.get(f"keterangan_{karyawan_id}", "")
+            sisa = key.replace("status_", "")
+            karyawan_id, tanggal = sisa.rsplit("_", 1)
+            status = request.form.get(key)
+            keterangan = request.form.get(f"keterangan_{sisa}", "")
 
             if status:
                 set_status_manual(karyawan_id, tanggal, status, keterangan)
 
-    return redirect(f"/laporan?tanggal={tanggal}")
+    return redirect(request.referrer or "/laporan")
 
 @app.errorhandler(RequestEntityTooLarge)
 def file_terlalu_besar(e):
