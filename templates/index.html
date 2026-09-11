@@ -10,6 +10,10 @@
         </div>
         <h3 class="font-bold text-slate-800 text-lg mb-1">Absen Masuk / Keluar</h3>
         <p class="text-xs text-slate-500 mb-6">Upload foto wajah untuk mencatat kehadiran</p>
+        <p class="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg mb-4">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+            Mode upload manual — untuk kondisi darurat. Gunakan kamera live untuk absen sehari-hari.
+        </p>
 
         <form id="form-absen" enctype="multipart/form-data" class="space-y-4">
             <div class="text-left">
@@ -36,7 +40,7 @@
         e.preventDefault();
         const formData = new FormData(this);
         try {
-            const response = await fetch("/absen", { method: "POST", body: formData });
+            const response = await fetch("/absen-manual", { method: "POST", body: formData });
             const data = await response.json();
             alert(data.message || data.error || "Terjadi kesalahan");
         } catch (err) {

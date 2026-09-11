@@ -10,6 +10,7 @@ from flask import Flask, request, jsonify, render_template, redirect
 from datetime import time, timedelta, datetime, date as date_cls
 from utils.face_utils import extract_embedding, embedding_to_binary, binary_to_embedding, compare_faces
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from utils.face_utils import deteksi_kedipan
 from utils.db_utils import (
     insert_karyawan,
     get_all_karyawan,
@@ -31,10 +32,14 @@ from utils.db_utils import (
     update_last_login, 
     insert_user,
     get_laporan_by_rentang,
-    get_daftar_nama_karyawan
+    get_daftar_nama_karyawan,
+    update_jam_masuk
 )
 
 JAM_MASUK_STANDAR = time(8, 0)
+JAM_PULANG_WEEKDAY = time(17, 0)
+JAM_PULANG_SABTU = time(12, 0)
+JEDA_MINIMUM_ABSEN_DETIK = 10 * 60  
 
 app = Flask(__name__)
 app.secret_key = "ganti-dengan-random-string-yang-panjang-dan-rahasia"
@@ -256,20 +261,8 @@ def register():
 
     return jsonify({"message": f"Karyawan '{nama}' berhasil didaftarkan"}), 200
 
-@app.route("/absen", methods=["POST"])
-def absen():
-    file = request.files.get("foto")
-    if not file:
-        return jsonify({"error": "Foto wajib diisi"}), 400
-
-    filepath, hasil = simpan_gambar_aman(file, UPLOAD_FOLDER)
-    if filepath is None:
-        return jsonify({"error": hasil}), 400
-
-    embedding_baru = extract_embedding(filepath)
-    if embedding_baru is None:
-        return jsonify({"error": "Wajah tidak terdeteksi di foto"}), 400
-
+def proses_absen(embedding_baru):
+    """Cocokkan wajah dan catat jam masuk/keluar. Dipakai bersama oleh /absen dan /absen-manual."""
     karyawan_list = get_all_karyawan()
     match_found = None
 
@@ -285,26 +278,76 @@ def absen():
         return jsonify({"error": "Wajah tidak dikenali"}), 404
 
     karyawan_id, nama = match_found
-    nik_row = get_karyawan_by_id(karyawan_id)
-    nik = nik_row.NIK if nik_row and nik_row.NIK else "-"
+    sekarang = datetime.now()
+    hari = sekarang.weekday()
+    jam_pulang_standar = JAM_PULANG_SABTU if hari == 5 else JAM_PULANG_WEEKDAY
 
     absensi_row = get_absensi_hari_ini(karyawan_id)
 
     if absensi_row is None:
         insert_jam_masuk(karyawan_id)
-        status = "Masuk"
+        return jsonify({"message": f"{nama} berhasil absen masuk"}), 200
+
+    elif absensi_row.JamMasuk is None:
+        update_jam_masuk(absensi_row.Id)
+        return jsonify({"message": f"{nama} berhasil absen masuk"}), 200
+
     elif absensi_row.JamKeluar is None:
+        jam_masuk_dt = datetime.combine(sekarang.date(), absensi_row.JamMasuk)
+        selisih_detik = (sekarang - jam_masuk_dt).total_seconds()
+
+        if selisih_detik < JEDA_MINIMUM_ABSEN_DETIK:
+            return jsonify({"message": f"{nama} sudah absen masuk, belum perlu absen lagi"}), 200
+
+        if sekarang.time() < jam_pulang_standar:
+            return jsonify({"error": f"{nama} belum bisa absen keluar sebelum jam {jam_pulang_standar.strftime('%H:%M')}"}), 400
+
         update_jam_keluar(absensi_row.Id)
-        status = "Keluar"
+        return jsonify({"message": f"{nama} berhasil absen keluar"}), 200
+
     else:
         return jsonify({"message": f"{nama} sudah absen masuk & keluar hari ini"}), 200
 
-    return jsonify({
-        "message": f"{nama} berhasil absen {status.lower()}",
-        "nama": nama,
-        "nik": nik,
-        "status": status
-    }), 200
+@app.route("/absen", methods=["POST"])
+def absen():
+    files = request.files.getlist("frames")
+    if not files or len(files) < 3:
+        return jsonify({"error": "Frame tidak cukup untuk verifikasi liveness"}), 400
+
+    filepaths = []
+    for f in files:
+        filepath, hasil = simpan_gambar_aman(f, UPLOAD_FOLDER)
+        if filepath:
+            filepaths.append(filepath)
+
+    if len(filepaths) < 3:
+        return jsonify({"error": "Sebagian besar frame tidak valid"}), 400
+
+    if not deteksi_kedipan(filepaths):
+        return jsonify({"error": "Liveness tidak terverifikasi — silakan berkedip normal saat scan"}), 400
+
+    frame_tengah = filepaths[len(filepaths) // 2]
+    embedding_baru = extract_embedding(frame_tengah)
+    if embedding_baru is None:
+        return jsonify({"error": "Wajah tidak terdeteksi di foto"}), 400
+
+    return proses_absen(embedding_baru)
+
+@app.route("/absen-manual", methods=["POST"])
+def absen_manual():
+    file = request.files.get("foto")
+    if not file:
+        return jsonify({"error": "Foto wajib diisi"}), 400
+
+    filepath, hasil = simpan_gambar_aman(file, UPLOAD_FOLDER)
+    if filepath is None:
+        return jsonify({"error": hasil}), 400
+
+    embedding_baru = extract_embedding(filepath)
+    if embedding_baru is None:
+        return jsonify({"error": "Wajah tidak terdeteksi di foto"}), 400
+
+    return proses_absen(embedding_baru)
 
 def hitung_status_absensi(tanggal, jam_masuk):
     hasil = {"status_masuk": "-", "telat_menit": 0}

@@ -44,43 +44,48 @@
             statusText.textContent = "Gagal akses kamera: " + err.message;
         });
 
-    function ambilDanKirim() {
+    async function ambilDanKirim() {
         sedangProses = true;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
+        const frames = [];
+        const JUMLAH_FRAME = 12;
+        const JEDA_ANTAR_FRAME = 150;
 
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append('foto', blob, 'capture.jpg');
+        for (let i = 0; i < JUMLAH_FRAME; i++) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+            frames.push(blob);
+            await new Promise(resolve => setTimeout(resolve, JEDA_ANTAR_FRAME));
+        }
 
-            try {
-                const response = await fetch('/absen', { method: 'POST', body: formData });
-                const data = await response.json();
-                tampilkanHasil(data);
-            } catch (err) {
-                sedangProses = false;
-            }
-        }, 'image/jpeg');
+        const formData = new FormData();
+        frames.forEach((blob, i) => formData.append('frames', blob, `frame${i}.jpg`));
+
+        try {
+            const response = await fetch('/absen', { method: 'POST', body: formData });
+            const data = await response.json();
+            tampilkanHasil(data);
+        } catch (err) {
+            sedangProses = false;
+        }
     }
 
     function tampilkanHasil(data) {
-        const berhasil = !!data.nama;
+        const berhasil = !!data.message;
+        const teks = data.message || data.error || "Terjadi kesalahan";
 
         if (berhasil) {
             hasilBox.className = "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-emerald-900/90";
             hasilBox.innerHTML = `
                 <i class="fa-solid fa-circle-check text-emerald-300 text-4xl mb-3"></i>
-                <h3 class="text-white font-bold text-xl">${data.nama}</h3>
-                <p class="text-emerald-200 text-xs font-mono mt-1">NIK: ${data.nik}</p>
-                <p class="text-white text-sm mt-2">Berhasil absen ${data.status}</p>
-                <p class="text-emerald-300 text-sm font-medium mt-1">Terima kasih!</p>
+                <p class="text-white text-lg font-semibold">${teks}</p>
             `;
         } else {
             hasilBox.className = "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-red-900/90";
             hasilBox.innerHTML = `
                 <i class="fa-solid fa-circle-exclamation text-red-300 text-4xl mb-3"></i>
-                <p class="text-white text-sm">${data.error || 'Terjadi kesalahan'}</p>
+                <p class="text-white text-sm">${teks}</p>
             `;
         }
 

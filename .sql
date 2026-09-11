@@ -4,12 +4,14 @@ SELECT
     a.Id,
     k.NIK,
     k.Nama,
+    k.FaceEmbedding,
     a.Tanggal,
     a.JamMasuk,
     a.JamKeluar,
     a.Status,
     a.Keterangan,
     a.CreatedAt
-FROM Absensi a
+FROM Absensi a 
 JOIN Karyawan k ON a.KaryawanId = k.Id
+WHERE Tanggal='2026-09-10'
 ORDER BY a.Tanggal DESC, a.JamMasuk DESC;

@@ -262,3 +262,13 @@ def insert_user(username, password_hash, nama_lengkap, role="hrd"):
     )
     conn.commit()
     conn.close()
+
+def update_jam_masuk(absensi_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE Absensi SET JamMasuk = ? WHERE Id = ?",
+        datetime.now().time(), absensi_id
+    )
+    conn.commit()
+    conn.close()
