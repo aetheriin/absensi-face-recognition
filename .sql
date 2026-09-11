@@ -13,5 +13,4 @@ SELECT
     a.CreatedAt
 FROM Absensi a 
 JOIN Karyawan k ON a.KaryawanId = k.Id
-WHERE Tanggal='2026-09-10'
 ORDER BY a.Tanggal DESC, a.JamMasuk DESC;
