@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Daftar Karyawan{% endblock %}
 {% block page_title %}Daftar Karyawan{% endblock %}
-
 {% block content %}
+
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
@@ -165,7 +165,7 @@
         openModal('modalEdit');
     }
 
-    // ==== Toggle mode foto: Upload vs Live Scan ====
+    <!-- Code Upload vs Live Scan -->
     let fotoBlobDaftar = null;
     let streamDaftar = null;
 
@@ -214,7 +214,7 @@
         }, 'image/jpeg');
     }
 
-    // ==== Submit Handler - Register ====
+    // Submit Handler Register
     document.getElementById("form-register").addEventListener("submit", async function (e) {
         e.preventDefault();
         const formData = new FormData(this);
@@ -242,7 +242,7 @@
         }
     });
 
-    // ==== Submit Handler - Edit ====
+    //  Submit Handler Edit 
     document.getElementById("form-edit").addEventListener("submit", async function (e) {
         e.preventDefault();
         const formData = new FormData(this);

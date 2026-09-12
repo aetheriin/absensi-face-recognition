@@ -10,7 +10,7 @@ from flask import Flask, request, jsonify, render_template, redirect
 from datetime import time, timedelta, datetime, date as date_cls
 from utils.face_utils import extract_embedding, embedding_to_binary, binary_to_embedding, compare_faces
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from utils.face_utils import deteksi_kedipan
+from utils.face_utils import verifikasi_liveness
 from utils.db_utils import (
     insert_karyawan,
     get_all_karyawan,
@@ -311,6 +311,8 @@ def proses_absen(embedding_baru):
 @app.route("/absen", methods=["POST"])
 def absen():
     files = request.files.getlist("frames")
+    tantangan = request.form.get("tantangan", "KEDIP")
+
     if not files or len(files) < 3:
         return jsonify({"error": "Frame tidak cukup untuk verifikasi liveness"}), 400
 
@@ -323,8 +325,8 @@ def absen():
     if len(filepaths) < 3:
         return jsonify({"error": "Sebagian besar frame tidak valid"}), 400
 
-    if not deteksi_kedipan(filepaths):
-        return jsonify({"error": "Liveness tidak terverifikasi — silakan berkedip normal saat scan"}), 400
+    if not verifikasi_liveness(filepaths, tantangan):
+        return jsonify({"error": "Liveness tidak terverifikasi — silakan ikuti instruksi dengan benar"}), 400
 
     frame_tengah = filepaths[len(filepaths) // 2]
     embedding_baru = extract_embedding(frame_tengah)

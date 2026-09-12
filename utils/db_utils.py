@@ -164,7 +164,7 @@ def get_laporan_by_tanggal(tanggal):
     conn.close()
 
     for row in data:
-        row["Tanggal"] = tanggal   # BARU — tambahkan kolom Tanggal manual ke tiap baris
+        row["Tanggal"] = tanggal
 
     return data
 
@@ -216,7 +216,7 @@ def cek_nik_sudah_ada(nik, exclude_id=None):
     return row is not None
 
 def cari_wajah_mirip(embedding_baru, threshold=0.55, exclude_id=None):
-    # Pengecekan karyawan yang sudah terdaftar
+    # Cek karyawan yang sudah terdaftar
     from utils.face_utils import binary_to_embedding, compare_faces
 
     karyawan_list = get_all_karyawan()

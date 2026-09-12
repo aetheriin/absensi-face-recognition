@@ -5,18 +5,19 @@ import time
 import io
 import numpy as np
 import mediapipe as mp
+import random
 
 SERVER_URL = "http://127.0.0.1:5000/absen"
-KAMERA_INDEX = 0  # ganti ke 1, 2, dst jika kamera default salah
+KAMERA_INDEX = 0  # default kamera
 
 JUMLAH_FRAME_LIVENESS = 12
-JEDA_ANTAR_FRAME = 0.20  # detik
-DURASI_TAMPIL_HASIL = 6   # detik
-COOLDOWN_SETELAH_HASIL = 5 # detik
+JEDA_ANTAR_FRAME = 0.20  
+DURASI_TAMPIL_HASIL = 6   
+COOLDOWN_SETELAH_HASIL = 5 
 
 NAMA_JENDELA = "Absensi - PT Yuni Bersaudara Sejahtera"
 
-# Inisialisasi MediaPipe Face Mesh untuk Liveness Lokal
+# Inisialisasi MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(
     max_num_faces=1,
@@ -34,14 +35,14 @@ def frame_ke_bytes(frame):
     ret, buffer = cv2.imencode('.jpg', frame)
     return io.BytesIO(buffer.tobytes())
 
-def kirim_ke_server(frames):
+def kirim_ke_server(frames, tantangan):
     files = []
     for i, frame in enumerate(frames):
         buf = frame_ke_bytes(frame)
         files.append(('frames', (f'frame{i}.jpg', buf, 'image/jpeg')))
 
     try:
-        response = requests.post(SERVER_URL, files=files, timeout=10)
+        response = requests.post(SERVER_URL, files=files, data={'tantangan': tantangan}, timeout=10)
         return response.json()
     except Exception as e:
         return {"error": f"Gagal menghubungi server: {e}"}
@@ -95,6 +96,15 @@ def cek_liveness_lokal(frame):
             kedip = True
             
     return menghadap_depan, kedip
+
+def cek_arah_wajah(landmarks, w):
+    """Return rasio untuk deteksi arah hadap: <1 menoleh kanan, >1 menoleh kiri, ~1 lurus."""
+    hidung = landmarks[1].x * w
+    mata_kiri = landmarks[263].x * w
+    mata_kanan = landmarks[33].x * w
+    jarak_kiri = abs(hidung - mata_kiri)
+    jarak_kanan = abs(hidung - mata_kanan)
+    return jarak_kiri / (jarak_kanan + 1e-6)
 
 def gambar_banner_status(frame, teks_utama, teks_sub="", warna_bg=(0, 0, 0)):
     """Menggambar banner transparan di bagian atas agar teks rapi & proporsional."""
@@ -156,8 +166,9 @@ def main():
     hasil_terakhir = None
     gagal_baca_beruntun = 0
     lokasi_terakhir = []
-    
     terdeteksi_kedip = False
+    tantangan_terpilih = None
+
 
     while True:
         if not jendela_masih_terbuka():
@@ -188,6 +199,7 @@ def main():
 
             if len(lokasi_wajah) > 0:
                 lokasi_terakhir = lokasi_wajah_asli
+                tantangan_terpilih = random.choice(["KEDIP", "MENOLEH_KANAN", "MENOLEH_KIRI"])  # BARU
                 status = "WAJAH_LURUS"
 
         # 2. STATUS CEK WAJAH LURUS
@@ -196,24 +208,44 @@ def main():
             lurus, _ = cek_liveness_lokal(frame)
             
             if lurus:
-                gambar_banner_status(frame, "Wajah Sesuai!", "Silakan kedipkan mata Anda...", (0, 100, 0))
-                status = "TANTANGAN_KEDIP"
+                gambar_banner_status(frame, "Wajah Sesuai!", "Bersiap untuk verifikasi...", (0, 100, 0))
+                status = "TANTANGAN_LIVENESS"  
                 terdeteksi_kedip = False
             else:
                 gambar_banner_status(frame, "Silahkan menghadap ke kamera", "Posisikan wajah lurus ke depan", (0, 50, 150))
 
         # 3. STATUS CEK KEDIP MATA
-        elif status == "TANTANGAN_KEDIP":
+        elif status == "TANTANGAN_LIVENESS":
             gambar_kotak_wajah(frame, lokasi_terakhir)
-            _, kedip = cek_liveness_lokal(frame)
-            
-            gambar_banner_status(frame, "Silahkan kedipkan mata ke kamera...", "Kedipkan mata untuk verifikasi", (0, 120, 180))
-            
-            if kedip:
-                terdeteksi_kedip = True
-            
-            # Jika mata dibuka kembali setelah kedipan
-            if terdeteksi_kedip and not kedip:
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = face_mesh.process(rgb_frame)
+
+            berhasil = False
+            if results.multi_face_landmarks:
+                landmarks = results.multi_face_landmarks[0].landmark
+                h, w, _ = frame.shape
+
+                if tantangan_terpilih == "KEDIP":
+                    gambar_banner_status(frame, "Silahkan kedipkan mata", "Kedipkan mata untuk verifikasi", (0, 120, 180))
+                    _, kedip = cek_liveness_lokal(frame)
+                    if kedip:
+                        terdeteksi_kedip = True
+                    if terdeteksi_kedip and not kedip:
+                        berhasil = True
+
+                elif tantangan_terpilih == "MENOLEH_KANAN":
+                    gambar_banner_status(frame, "Silahkan menoleh ke KANAN", "Tahan sebentar lalu kembali", (0, 120, 180))
+                    rasio = cek_arah_wajah(landmarks, w)
+                    if rasio < 0.6:
+                        berhasil = True
+
+                elif tantangan_terpilih == "MENOLEH_KIRI":
+                    gambar_banner_status(frame, "Silahkan menoleh ke KIRI", "Tahan sebentar lalu kembali", (0, 120, 180))
+                    rasio = cek_arah_wajah(landmarks, w)
+                    if rasio > 1.8:
+                        berhasil = True
+
+            if berhasil:
                 status = "CAPTURING"
                 waktu_status_berubah = time.time()
 
@@ -240,7 +272,7 @@ def main():
             if dibatalkan:
                 break
 
-            hasil_terakhir = kirim_ke_server(frames_liveness)
+            hasil_terakhir = kirim_ke_server(frames_liveness, tantangan_terpilih)
             status = "HASIL"
             waktu_status_berubah = time.time()
 

@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Absen via Kamera{% endblock %}
 {% block page_title %}Absen via Kamera{% endblock %}
-
 {% block content %}
+
 <div class="max-w-lg mx-auto">
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="relative bg-slate-900 aspect-[4/3] flex items-center justify-center">
             <video id="video" autoplay playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
             <canvas id="canvas" style="display:none;"></canvas>
-
-            <!-- Kotak hasil, muncul di atas video -->
             <div id="hasilBox" class="absolute inset-0 hidden flex-col items-center justify-center text-center p-6"></div>
         </div>
         <div class="p-4 text-center">
@@ -29,15 +27,26 @@
     const canvas = document.getElementById('canvas');
     const hasilBox = document.getElementById('hasilBox');
     const statusText = document.getElementById('statusText');
-
     let sedangProses = false;
+    let tantanganTerpilih = 'KEDIP';
     const JEDA_ANTAR_CAPTURE = 4000;
     const DURASI_TAMPIL_HASIL = 3000;
+    const TEKS_INSTRUKSI = {
+        'KEDIP': 'Silakan berkedip normal saat verifikasi',
+        'MENOLEH_KANAN': 'Silakan menoleh sedikit ke KANAN saat verifikasi',
+        'MENOLEH_KIRI': 'Silakan menoleh sedikit ke KIRI saat verifikasi'
+    };
+
+    function pilihTantanganBaru() {
+        const opsi = ['KEDIP', 'MENOLEH_KANAN', 'MENOLEH_KIRI'];
+        tantanganTerpilih = opsi[Math.floor(Math.random() * opsi.length)];
+        statusText.textContent = TEKS_INSTRUKSI[tantanganTerpilih];
+    }
 
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
             video.srcObject = stream;
-            statusText.textContent = "Kamera aktif — arahkan wajah ke kamera";
+            pilihTantanganBaru();
             setInterval(() => { if (!sedangProses) ambilDanKirim(); }, JEDA_ANTAR_CAPTURE);
         })
         .catch(err => {
@@ -61,6 +70,7 @@
 
         const formData = new FormData();
         frames.forEach((blob, i) => formData.append('frames', blob, `frame${i}.jpg`));
+        formData.append('tantangan', tantanganTerpilih);
 
         try {
             const response = await fetch('/absen', { method: 'POST', body: formData });
@@ -71,23 +81,16 @@
         }
     }
 
-    function tampilkanHasil(data) {
+        function tampilkanHasil(data) {
         const berhasil = !!data.message;
         const teks = data.message || data.error || "Terjadi kesalahan";
 
-        if (berhasil) {
-            hasilBox.className = "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-emerald-900/90";
-            hasilBox.innerHTML = `
-                <i class="fa-solid fa-circle-check text-emerald-300 text-4xl mb-3"></i>
-                <p class="text-white text-lg font-semibold">${teks}</p>
-            `;
-        } else {
-            hasilBox.className = "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-red-900/90";
-            hasilBox.innerHTML = `
-                <i class="fa-solid fa-circle-exclamation text-red-300 text-4xl mb-3"></i>
-                <p class="text-white text-sm">${teks}</p>
-            `;
-        }
+        hasilBox.className = berhasil
+            ? "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-emerald-900/90"
+            : "absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-red-900/90";
+        hasilBox.innerHTML = berhasil
+            ? `<i class="fa-solid fa-circle-check text-emerald-300 text-4xl mb-3"></i><p class="text-white text-lg font-semibold">${teks}</p>`
+            : `<i class="fa-solid fa-circle-exclamation text-red-300 text-4xl mb-3"></i><p class="text-white text-sm">${teks}</p>`;
 
         hasilBox.classList.remove('hidden');
         hasilBox.classList.add('flex');
@@ -96,7 +99,14 @@
             hasilBox.classList.remove('flex');
             hasilBox.classList.add('hidden');
             sedangProses = false;
+            pilihTantanganBaru();
         }, DURASI_TAMPIL_HASIL);
     }
+
+    window.addEventListener('beforeunload', () => {
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+    });
 </script>
 {% endblock %}
