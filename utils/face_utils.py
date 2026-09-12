@@ -49,15 +49,15 @@ def deteksi_kedipan(list_filepath, threshold_ear=0.25):
         ear_rata = (ear_kiri + ear_kanan) / 2.0
         riwayat_ear.append(ear_rata)
 
-    print(f"[DEBUG] Riwayat EAR: {riwayat_ear}")  # BARU — lihat nilai aslinya
+    print(f"[DEBUG] Riwayat EAR: {riwayat_ear}")  
 
     if len(riwayat_ear) < 3:
-        print("[DEBUG] Frame tidak cukup untuk analisis EAR")  # BARU
+        print("[DEBUG] Frame tidak cukup untuk analisis EAR")  
         return False
 
     ear_minimum = min(riwayat_ear)
     ear_maksimum = max(riwayat_ear)
-    print(f"[DEBUG] EAR min: {ear_minimum}, max: {ear_maksimum}")  # BARU
+    print(f"[DEBUG] EAR min: {ear_minimum}, max: {ear_maksimum}") 
 
     return ear_minimum < threshold_ear and ear_maksimum > threshold_ear
 
@@ -97,7 +97,7 @@ def deteksi_menoleh(list_filepath, arah, ambang_perubahan=0.3):
     if len(riwayat_rasio) < 3:
         return False
 
-    baseline = riwayat_rasio[0]  # anggap frame pertama sebagai posisi awal
+    baseline = riwayat_rasio[0] 
     perubahan_max = max(abs(r - baseline) / baseline for r in riwayat_rasio)
 
     print(f"[DEBUG] Baseline: {baseline}, Perubahan maksimum: {perubahan_max}")

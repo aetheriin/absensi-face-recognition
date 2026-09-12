@@ -8,13 +8,11 @@ import mediapipe as mp
 import random
 
 SERVER_URL = "http://127.0.0.1:5000/absen"
-KAMERA_INDEX = 0  # default kamera
-
+KAMERA_INDEX = 0  
 JUMLAH_FRAME_LIVENESS = 12
 JEDA_ANTAR_FRAME = 0.20  
 DURASI_TAMPIL_HASIL = 6   
 COOLDOWN_SETELAH_HASIL = 5 
-
 NAMA_JENDELA = "Absensi - PT Yuni Bersaudara Sejahtera"
 
 # Inisialisasi MediaPipe Face Mesh
@@ -92,7 +90,7 @@ def cek_liveness_lokal(frame):
         ear_kanan = hitung_ear(landmarks, EYE_RIGHT, w, h)
         avg_ear = (ear_kiri + ear_kanan) / 2.0
         
-        if avg_ear < 0.21:  # Batas kelopak mata tertutup/berkedip
+        if avg_ear < 0.21:  # Batas kelopak mata berkedip
             kedip = True
             
     return menghadap_depan, kedip
