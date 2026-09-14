@@ -36,20 +36,20 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <th class="py-3 px-6">Tanggal</th>
-                        <th class="py-3 px-6">Nama</th>
-                        <th class="py-3 px-6">Jam Masuk</th>
-                        <th class="py-3 px-6">Status</th>
-                        <th class="py-3 px-6">Telat (menit)</th>
-                        <th class="py-3 px-6">Jam Keluar</th>
-                        <th class="py-3 px-6">Ubah Status</th>
-                        <th class="py-3 px-6">Keterangan</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Tanggal</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Nama</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Jam Masuk</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Status</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Telat (menit)</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Jam Keluar</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Ubah Status</th>
+                        <th class="py-3 px-6 whitespace-nowrap">Keterangan</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                     {% for row in data %}
                     <tr class="hover:bg-slate-50 transition">
-                        <td class="py-4 px-6 text-slate-500 text-xs">{{ row.Tanggal }}</td>
+                        <td class="py-4 px-6 text-slate-500 text-xs whitespace-nowrap">{{ row.Tanggal }}</td>
                         <td class="py-4 px-6 font-semibold text-slate-800">{{ row.Nama }}</td>
                         <td class="py-4 px-6">{{ row.JamMasuk if row.JamMasuk else '-' }}</td>
                         <td class="py-4 px-6">
@@ -60,7 +60,7 @@
                             {% elif row.status_masuk in ['Izin', 'Sakit', 'Cuti'] %}
                             <span class="bg-amber-50 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ row.status_masuk }}</span>
                             {% else %}
-                            <span class="bg-slate-100 text-slate-500 text-xs font-semibold px-2.5 py-1 rounded-full">Belum Ada Data</span>
+                            <span class="bg-slate-100 text-slate-500 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">Belum Ada Data</span>
                             {% endif %}
                         </td>
                         <td class="py-4 px-6">{{ row.telat_menit if row.telat_menit > 0 else '-' }}</td>
