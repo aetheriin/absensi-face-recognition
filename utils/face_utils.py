@@ -73,10 +73,6 @@ def hitung_rasio_yaw(landmarks):
     return jarak_ke_kiri / (jarak_ke_kanan + 1e-6)
 
 def deteksi_menoleh(list_filepath, arah, ambang_perubahan=0.3):
-    """
-    Deteksi menoleh berdasarkan PERUBAHAN RELATIF dari rasio awal (baseline),
-    bukan angka mutlak — lebih stabil untuk berbagai bentuk wajah/kondisi kamera.
-    """
     riwayat_rasio = []
 
     for filepath in list_filepath:
